@@ -506,6 +506,10 @@ _prepare_invocation_state (struct invocation_state *state,
                 case GI_INFO_TYPE_INTERFACE:
                     g_assert (state->n_in_args > 0);
                     state->in_args[0].v_pointer = hbgobject_get (hb_arg);
+                    if (!state->in_args[0].v_pointer) {
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50099, "You must instantiate an object using a constructor before invoking a non-class method on it", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                        return FALSE;
+                    }
                     break;
                 default:
                     /* Other types don't have methods. */
