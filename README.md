@@ -21,6 +21,16 @@ This software is covered by the GNU Lesser General Public License
 (version 2.1, or if you choose, a later version).  Basically just don't
 say you wrote bits you didn't.
 
+Documentation and Examples
+==========================
+As the project is modeled after Python bindings for GObject Introspection, I think the best source for examples are Python examples - with the exception that they must be translated to Harbour, but this is mostly straightforward.
+Where to find the examples:
+
+  * http://lazka.github.io/pgi-docs/#Gtk-3.0 - full API reference
+  * http://python-gtk-3-tutorial.readthedocs.io/en/latest/ - tutorials
+  * https://developer.gnome.org/gnome-devel-demos/stable/py.html.en - some demo apps
+  * https://git.gnome.org/browse/pygobject/tree/demos/gtk-demo - gtk-demo app
+
 Compilation
 ===========
 
