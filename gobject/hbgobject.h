@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  */
 
 #ifndef HBGOBJECT_H
@@ -62,6 +62,11 @@ hbg_object_peek_inst_data(GObject *obj)
 }
 
 #define hbgobject_get(o) ((GObject *)hb_arrayGetPtr((o), HBGI_IVAR_GOBJECT))
+
+#define hbg_boxed_get(v,t)        ((t *)hb_arrayGetPtr((v), HBGI_IVAR_GOBJECT))
+#define hbg_boxed_get_ptr(v)      hb_arrayGetPtr((v), HBGI_IVAR_GOBJECT)
+#define hbg_boxed_set_ptr(v,p)    hb_arraySetPtr((v), HBGI_IVAR_GOBJECT, (p))
+
 #define hbg_pointer_get(v,t)      ((t *)(hb_arrayGetPtr((v), HBGPOINTER_IVAR_POINTER)))
 #define hbg_pointer_gtype(v)      ((GType)(hb_arrayGetNLL((v), HBGPOINTER_IVAR_GTYPE)))
 

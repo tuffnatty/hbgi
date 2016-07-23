@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  */
 
@@ -78,8 +78,6 @@ HB_FUNC_STATIC(hbgi_gtype_class_wrapper_invoke)
    }
 
    _wrap_g_callable_info_invoke((GICallableInfo *)meth);
-
-   g_print("invoked!\n");
 }
 
 
@@ -119,6 +117,18 @@ hbgi_gtype_class_wrapper_add_methods(HB_USHORT uiClass, GIBaseInfo *info, GHashT
          for (i = 0; i < n_methods; i++)
          {
             GIFunctionInfo *meth = g_object_info_get_method(oinfo, i);
+            s_infos = g_slist_prepend(s_infos, meth);
+            hbgi_gtype_class_wrapper_add_method(uiClass, meth, method_info_hash);
+         }
+         break;
+      }
+      case GI_INFO_TYPE_UNION:
+      {
+         GIUnionInfo *oinfo = (GIUnionInfo *)info;
+         n_methods = g_union_info_get_n_methods(oinfo);
+         for (i = 0; i < n_methods; i++)
+         {
+            GIFunctionInfo *meth = g_union_info_get_method(oinfo, i);
             s_infos = g_slist_prepend(s_infos, meth);
             hbgi_gtype_class_wrapper_add_method(uiClass, meth, method_info_hash);
          }
@@ -199,6 +209,10 @@ hbgi_gtype_class_wrapper_register(GType gtype, GIRegisteredTypeInfo *info)
             }
             hb_arraySetNI(bases, 1, parent);
          }
+         break;
+      case GI_INFO_TYPE_UNION:
+         bases = hb_itemArrayNew(0);
+         method_info_hash = g_hash_table_new(g_str_hash, g_str_equal);
          break;
       default:
          hb_errRT_BASE_SubstR( HBGI_ERR, 50019, "unknown GIInfoType", "hbgi", HB_ERR_ARGS_BASEPARAMS );
@@ -288,6 +302,7 @@ hbgi_module_get_class_from_message(void)
          {
             case GI_INFO_TYPE_ENUM:
             case GI_INFO_TYPE_OBJECT:
+            case GI_INFO_TYPE_UNION:
                uiClass = hbgi_gtype_class_wrapper_register(type, info);
                break;
             default:

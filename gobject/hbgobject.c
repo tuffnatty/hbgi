@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  * Most of the logic in this file is based on pygobject.c from pygobject
  * library:
@@ -870,7 +870,7 @@ hbgobject_lookup_class(GType gtype)
 
     if (gtype == G_TYPE_INTERFACE)
 	return HbGInterface_Type;
-    
+
     hbclass = hbg_type_get_custom(g_type_name(gtype));
     if (hbclass)
 	return hbclass;
@@ -941,9 +941,12 @@ hbgobject_new_full(GObject *obj, gboolean sink, gpointer g_class)
 	self = hbgi_hb_clsInst(uiClass);
 	if (self == NULL)
 	    return NULL;
+        self = hb_itemNew(self);
         hb_arraySetPtr(self, HBGI_IVAR_GOBJECT, obj);
 	g_object_ref(obj);
-	hbgobject_register_wrapper((PHB_ITEM)self);
+        /*g_print("Registering wrapper %p of type %s for GType %s\n",
+                self, hb_itemTypeStr(self), g_type_name(g_class ? G_OBJECT_CLASS_TYPE(g_class) : G_OBJECT_TYPE(obj)));*/
+	hbgobject_register_wrapper(hb_itemNew(self));
 	//PyObject_GC_Track((PyObject *)self);
     }
 

@@ -2,9 +2,9 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
- * Most of the logic in this file is based on pygi-invoke.c from pygobject
+ * Most of the logic in this file is based on pygi-argument.c from pygobject
  * library:
  *
  * Copyright (C) 2005-2009 Johan Dahlin <johan@gnome.org>
@@ -22,9 +22,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
- * USA
+ * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <string.h>
@@ -38,7 +36,9 @@
 
 #include "hbgi.h"
 #include "hbgi-argument.h"
+#include "hbgi-boxed.h"
 #include "hbgi-info.h"
+#include "hbgi-struct-marshal.h"
 #include "hbgi-type.h"
 
 #include "hbgobject.h"
@@ -157,7 +157,7 @@ _hbgi_g_registered_type_info_check_object (GIRegisteredTypeInfo *info,
 
         msg = g_strdup_printf("Must be %s, not %s", type_name_expected, hb_clsName(hb_objGetClass(object)));
 
-        hb_errRT_BASE_SubstR(EG_DATATYPE, 50049, msg, "hbgi", HB_ERR_ARGS_BASEPARAMS);
+        hb_errRT_BASE_SubstR(EG_DATATYPE, 50049, __func__, msg, HB_ERR_ARGS_BASEPARAMS);
 
         g_free (msg);
         g_free (type_name_expected);
@@ -177,7 +177,7 @@ _hbgi_g_type_interface_check_object (GIBaseInfo *info,
     switch (info_type) {
         case GI_INFO_TYPE_CALLBACK:
             if (!(HB_IS_SYMBOL(object) || HB_IS_BLOCK(object))) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, "Must be a callable", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, __func__, "Must be a callable", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
             }
             break;
@@ -219,7 +219,7 @@ _hbgi_g_type_interface_check_object (GIBaseInfo *info,
             if (g_type_is_a (type, G_TYPE_CLOSURE)) {
                 if (!(HB_IS_SYMBOL(object) || HB_IS_BLOCK(object) ||
                       hbg_type_from_object_strict (object, FALSE) == G_TYPE_CLOSURE)) {
-                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, "Must be a callable", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, __func__, "Must be a callable", HB_ERR_ARGS_BASEPARAMS);
                     retval = 0;
                 }
                 break;
@@ -308,7 +308,7 @@ _hbgi_g_type_info_check_object (GITypeInfo *type_info,
             /* UINT8 types can be characters */
             if (HB_IS_STRING(object)) {
                 if (hb_itemGetCLen(object) != 1) {
-                    hb_errRT_BASE_SubstR(EG_DATAWIDTH, 50030, "Must be a single character", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATAWIDTH, 50030, __func__, "Must be a single character", HB_ERR_ARGS_BASEPARAMS);
                     retval = 0;
                     break;
                 }
@@ -327,7 +327,7 @@ _hbgi_g_type_info_check_object (GITypeInfo *type_info,
             //PHB_ITEM number, lower, upper;
 
             if (!HB_IS_NUMERIC(object)) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50031, "Must be a number", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50031, __func__, "Must be a number", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
                 break;
             }
@@ -405,7 +405,7 @@ check_number_release:
         case GI_TYPE_TAG_GTYPE:
         {
             if (hbg_type_from_object (object) == 0) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50032, "Must be gobject.GType", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50032, __func__, "Must be gobject.GType", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
             }
             break;
@@ -416,13 +416,13 @@ check_number_release:
             if (HB_IS_STRING(object)) {
                 size = hb_cdpTextLen(hb_vmCDP(), hb_itemGetCPtr(object), hb_itemGetCLen(object));
             } else {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50033, "Must be string", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50033, __func__, "Must be string", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
                 break;
             }
 
             if (size != 1) {
-                hb_errRT_BASE_SubstR(EG_DATAWIDTH, 50034, "Must be a one character string", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATAWIDTH, 50034, __func__, "Must be a one character string", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
                 break;
             }
@@ -432,7 +432,7 @@ check_number_release:
         case GI_TYPE_TAG_UTF8:
         case GI_TYPE_TAG_FILENAME:
             if (!HB_IS_STRING(object)) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50033, "Must be string", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50033, __func__, "Must be string", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
             }
             break;
@@ -446,7 +446,7 @@ check_number_release:
             HB_SIZE i;
 
             if (!HB_IS_ARRAY(object)) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50035, "Must be array", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50035, __func__, "Must be array", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
                 break;
             }
@@ -457,7 +457,7 @@ check_number_release:
                 fixed_size = g_type_info_get_array_fixed_size (type_info);
                 if (fixed_size >= 0 && length != (HB_SIZE)fixed_size) {
                     gchar *msg = g_strdup_printf("Must contain %zd items, not %zd", fixed_size, length);
-                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50036, msg, "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50036, __func__, msg, HB_ERR_ARGS_BASEPARAMS);
                     g_free(msg);
                     retval = 0;
                     break;
@@ -486,7 +486,7 @@ check_number_release:
                     break;
                 }
                 if (!retval) {
-                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50037, "Array element is of wrong type", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50037, __func__, "Array element is of wrong type", HB_ERR_ARGS_BASEPARAMS);
                     //_PyGI_ERROR_PREFIX ("Item %zd: ", i);
                     break;
                 }
@@ -516,7 +516,7 @@ check_number_release:
             HB_SIZE i;
 
             if (!HB_IS_HASH(object)) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50038, "Must be hash", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50038, __func__, "Must be hash", HB_ERR_ARGS_BASEPARAMS);
                 retval = 0;
                 break;
             }
@@ -541,7 +541,7 @@ check_number_release:
                 }
                 if (!retval) {
                     //_PyGI_ERROR_PREFIX ("Key %zd :", i);
-                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50039, "Hash key is of wrong type", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50039, __func__, "Hash key is of wrong type", HB_ERR_ARGS_BASEPARAMS);
                     break;
                 }
 
@@ -551,7 +551,7 @@ check_number_release:
                 }
                 if (!retval) {
                     //_PyGI_ERROR_PREFIX ("Value %zd :", i);
-                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50039, "Hash value is of wrong type", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                    hb_errRT_BASE_SubstR(EG_DATATYPE, 50039, __func__, "Hash value is of wrong type", HB_ERR_ARGS_BASEPARAMS);
                     break;
                 }
             }
@@ -561,7 +561,7 @@ check_number_release:
             break;
         }
         case GI_TYPE_TAG_ERROR:
-            hb_errRT_BASE_SubstR(EG_DATATYPE, 50040, "Error marshalling is not supported yet", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+            hb_errRT_BASE_SubstR(EG_DATATYPE, 50040, __func__, "Error marshalling is not supported yet", HB_ERR_ARGS_BASEPARAMS);
             /* TODO */
             break;
     }
@@ -705,7 +705,7 @@ _hbgi_argument_from_object (PHB_ITEM object,
             arg.v_string = g_filename_from_utf8 (string, -1, NULL, NULL, &error);
 
             if (arg.v_string == NULL) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, error->message, "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50041, __func__, error->message, HB_ERR_ARGS_BASEPARAMS);
                 /* TODO: Convert the error to an exception. */
             }
 
@@ -809,7 +809,7 @@ array_success:
 
                     type = g_registered_type_info_get_g_type ( (GIRegisteredTypeInfo *) info);
 
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50050, "boxed/struct/union", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+                    hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, "boxed/struct/union", HB_ERR_ARGS_BASEPARAMS );
 #if 0
                     /* Handle special cases first. */
                     if (g_type_is_a (type, G_TYPE_VALUE)) {
@@ -1052,7 +1052,7 @@ hash_table_release:
             break;
         }
         case GI_TYPE_TAG_ERROR:
-            hb_errRT_BASE_SubstR(EG_DATATYPE, 50040, "Error marshalling is not supported yet", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+            hb_errRT_BASE_SubstR(EG_DATATYPE, 50040, __func__, "Error marshalling is not supported yet", HB_ERR_ARGS_BASEPARAMS);
             /* TODO */
             break;
     }
@@ -1078,10 +1078,22 @@ _hbgi_glong_from_argument (GIArgument  *arg,
         }
 }
 
+/**
+ * _hbgi_argument_to_object:
+ * @arg: The argument to convert to an object.
+ * @type_info: Type info for @arg
+ * @transfer:
+ *
+ * If the argument is of type array, it must be encoded in a GArray, by calling
+ * _hbgi_argument_to_array(). This logic can not be folded into this method
+ * as determining array lengths may require access to method call arguments.
+ *
+ * Returns: A HB_ITEM representing @arg
+ */
 PHB_ITEM
-_hbgi_argument_to_object(GIArgument  *arg,
-                         GITypeInfo *type_info,
-                         GITransfer transfer)
+_hbgi_argument_to_object (GIArgument  *arg,
+                          GITypeInfo *type_info,
+                          GITransfer transfer)
 {
     GITypeTag type_tag;
     PHB_ITEM object = NULL;
@@ -1089,6 +1101,7 @@ _hbgi_argument_to_object(GIArgument  *arg,
     type_tag = g_type_info_get_tag (type_info);
     switch (type_tag) {
         case GI_TYPE_TAG_VOID:
+        {
             if (g_type_info_is_pointer (type_info)) {
                 /* Raw Python objects are passed to void* args */
                 g_warn_if_fail (transfer == GI_TRANSFER_NOTHING);
@@ -1097,6 +1110,7 @@ _hbgi_argument_to_object(GIArgument  *arg,
                 object = NULL;
             object = hb_itemNew(object);
             break;
+        }
         case GI_TYPE_TAG_BOOLEAN:
         {
             object = hb_itemPutL(NULL, arg->v_boolean);
@@ -1170,7 +1184,7 @@ _hbgi_argument_to_object(GIArgument  *arg,
                 object = hb_itemPutCL(NULL, (char*)utf8, bytes);
             } else {
                 /* TODO: Convert the error to an exception. */
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50060, "Invalid unicode codepoint", "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50060, __func__, "Invalid unicode codepoint", HB_ERR_ARGS_BASEPARAMS);
                 object = hb_itemNew(NULL);
             }
             break;
@@ -1195,7 +1209,7 @@ _hbgi_argument_to_object(GIArgument  *arg,
 
             string = g_filename_to_utf8 (arg->v_string, -1, NULL, NULL, &error);
             if (string == NULL) {
-                hb_errRT_BASE_SubstR(EG_DATATYPE, 50061, error->message, "hbgi", HB_ERR_ARGS_BASEPARAMS);
+                hb_errRT_BASE_SubstR(EG_DATATYPE, 50061, __func__, error->message, HB_ERR_ARGS_BASEPARAMS);
                 /* TODO: Convert the error to an exception. */
                 break;
             }
@@ -1208,19 +1222,28 @@ _hbgi_argument_to_object(GIArgument  *arg,
         }
         case GI_TYPE_TAG_ARRAY:
         {
+            /* Arrays are assumed to be packed in a GArray */
             GArray *array;
             GITypeInfo *item_type_info;
             GITypeTag item_type_tag;
             GITransfer item_transfer;
             gsize i, item_size;
 
-            array = arg->v_pointer;
-
             item_type_info = g_type_info_get_param_type (type_info, 0);
             g_assert (item_type_info != NULL);
 
             item_type_tag = g_type_info_get_tag (item_type_info);
             item_transfer = transfer == GI_TRANSFER_CONTAINER ? GI_TRANSFER_NOTHING : transfer;
+            
+            array = arg->v_pointer;
+            item_size = g_array_get_element_size (array);
+            
+            if (G_UNLIKELY (item_size > sizeof(GIArgument))) {
+                g_critical ("Stack overflow protection. "
+                            "Can't copy array element into GIArgument.");
+                object = hb_itemArrayNew(0);
+                break;
+            }
 
             if (item_type_tag == GI_TYPE_TAG_UINT8) {
                 /* Return as a byte array */
@@ -1231,7 +1254,6 @@ _hbgi_argument_to_object(GIArgument  *arg,
 
                 object = hb_itemPutCL(NULL, array->data, array->len);
                 break;
-
             } else {
                 if (arg->v_pointer == NULL) {
                     object = hb_itemArrayNew(0);
@@ -1240,35 +1262,35 @@ _hbgi_argument_to_object(GIArgument  *arg,
 
                 object = hb_itemArrayNew(array->len);
                 if (object == NULL) {
+                    g_critical ("Failure to allocate array for %u items", array->len);
+                    g_base_info_unref ( (GIBaseInfo *) item_type_info);
                     break;
                 }
 
-            }
-            item_size = g_array_get_element_size (array);
+                for (i = 0; i < array->len; i++) {
+                    GIArgument item;
+                    gboolean is_struct = FALSE;
 
-            for (i = 0; i < array->len; i++) {
-                GIArgument item;
-                gboolean is_struct = FALSE;
-
-                if (item_type_tag == GI_TYPE_TAG_INTERFACE) {
-                    GIBaseInfo *iface_info = g_type_info_get_interface (item_type_info);
-                    switch (g_base_info_get_type (iface_info)) {
-                        case GI_INFO_TYPE_STRUCT:
-                        case GI_INFO_TYPE_BOXED:
-                            is_struct = TRUE;
-                        default:
-                            break;
+                    if (item_type_tag == GI_TYPE_TAG_INTERFACE) {
+                        GIBaseInfo *iface_info = g_type_info_get_interface (item_type_info);
+                        switch (g_base_info_get_type (iface_info)) {
+                            case GI_INFO_TYPE_STRUCT:
+                            case GI_INFO_TYPE_BOXED:
+                                is_struct = TRUE;
+                            default:
+                                break;
+                        }
+                        g_base_info_unref ( (GIBaseInfo *) iface_info);
                     }
-                    g_base_info_unref ( (GIBaseInfo *) iface_info);
-                }
 
-                if (is_struct) {
-                    item.v_pointer = &g_array_index(array, GIArgument, i);
-                } else {
-                    memcpy (&item, &g_array_index(array, GIArgument, i), item_size);
-                }
+                    if (is_struct) {
+                        item.v_pointer = &g_array_index(array, GIArgument, i);
+                    } else {
+                        memcpy (&item, &g_array_index(array, GIArgument, i), item_size);
+                    }
 
-                hb_itemArrayPut(object, i + 1, _hbgi_argument_to_object (&item, item_type_info, item_transfer));
+                    hb_itemArrayPut(object, i + 1, _hbgi_argument_to_object (&item, item_type_info, item_transfer));
+                }
             }
 
             g_base_info_unref ( (GIBaseInfo *) item_type_info);
@@ -1300,67 +1322,25 @@ _hbgi_argument_to_object(GIArgument  *arg,
                 case GI_INFO_TYPE_STRUCT:
                 case GI_INFO_TYPE_UNION:
                 {
-                    GType type;
+                    HB_USHORT hb_type;
+                    GType g_type = g_registered_type_info_get_g_type ( (GIRegisteredTypeInfo *) info);
+                    gboolean is_foreign = (info_type == GI_INFO_TYPE_STRUCT) &&
+                                          (g_struct_info_is_foreign ((GIStructInfo *) info));
 
-                    if (arg->v_pointer == NULL) {
-                        object = hb_itemNew(NULL);
-                        break;
-                    }
-
-                    type = g_registered_type_info_get_g_type ( (GIRegisteredTypeInfo *) info);
-                    if (g_type_is_a (type, G_TYPE_VALUE)) {
-                        object = hbg_value_as_hbitem(arg->v_pointer, FALSE);
-                    } else if (g_struct_info_is_foreign (info)) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50057, "foreign struct", "hbgi", HB_ERR_ARGS_BASEPARAMS );
-                        //object = hbgi_struct_foreign_convert_from_g_argument (info, arg->v_pointer);
-                    } else if (g_type_is_a (type, G_TYPE_BOXED)) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50050, "boxed/struct/union", "hbgi", HB_ERR_ARGS_BASEPARAMS );
-                        /*PyObject *py_type;
-
-                        py_type = _pygi_type_get_from_g_type (type);
-                        if (py_type == NULL)
-                            break;
-
-                        object = _pygi_boxed_new ( (PyTypeObject *) py_type, arg->v_pointer, transfer == GI_TRANSFER_EVERYTHING);
-
-                        Py_DECREF (py_type);*/
-                    } else if (g_type_is_a (type, G_TYPE_POINTER)) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50061, "pointer", "hbgi", HB_ERR_ARGS_BASEPARAMS );
-                        /*PyObject *py_type;
-
-                        py_type = _pygi_type_get_from_g_type (type);
-
-                        if (py_type == NULL || !PyType_IsSubtype ( (PyTypeObject *) type, &PyGIStruct_Type)) {
-                            g_warn_if_fail (transfer == GI_TRANSFER_NOTHING);
-                            object = pyg_pointer_new (type, arg->v_pointer);
-                        } else {
-                            object = _pygi_struct_new ( (PyTypeObject *) py_type, arg->v_pointer, transfer == GI_TRANSFER_EVERYTHING);
-                        }
-
-                        Py_XDECREF (py_type);*/
-                    } else if (type == G_TYPE_NONE) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50050, "boxed/struct/union", "hbgi", HB_ERR_ARGS_BASEPARAMS );
-#if 0
-                        PyObject *py_type;
-
-                        py_type = _pygi_type_import_by_gi_info (info);
-                        if (py_type == NULL) {
-                            break;
-                        }
-
-                        /* Only structs created in invoke can be safely marked
-                         * GI_TRANSFER_EVERYTHING. Trust that invoke has
-                         * filtered correctly
-                         */
-                        object = _pygi_struct_new ( (PyTypeObject *) py_type, arg->v_pointer,
-                                                    transfer == GI_TRANSFER_EVERYTHING);
-
-                        Py_DECREF (py_type);
-#endif
+                    /* Special case variant and none to force loading from py module. */
+                    if (g_type == G_TYPE_VARIANT || g_type == G_TYPE_NONE) {
+                        hb_type = _hbgi_type_import_by_gi_info (info);
                     } else {
-                        //PyErr_Format (PyExc_NotImplementedError, "structure type '%s' is not supported yet", g_type_name (type));
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50050, "boxed/struct/union", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+                        hb_type = _hbgi_type_get_from_g_type (g_type);
                     }
+
+                    object = hbgi_arg_struct_to_hb_marshal (arg,
+                                                            info, /*interface_info*/
+                                                            g_type,
+                                                            hb_type,
+                                                            transfer,
+                                                            FALSE, /*is_allocated*/
+                                                            is_foreign);
 
                     break;
                 }
@@ -1373,7 +1353,7 @@ _hbgi_argument_to_object(GIArgument  *arg,
 
                     if (type == G_TYPE_NONE) {
                         /* An enum with a GType of None is an enum without GType */
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50065, "enum without GType", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50065, __func__, "enum without GType", HB_ERR_ARGS_BASEPARAMS );
                         /*PyObject *py_type = _pygi_type_import_by_gi_info (info);
                         glong val = _hbgi_glong_from_argument (arg, type_info);
 
@@ -1716,7 +1696,7 @@ _hbgi_argument_release (GIArgument   *arg,
                             g_slice_free (GValue, value);
                         }
                     } else if (g_struct_info_is_foreign ( (GIStructInfo*) info)) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50009, "foreign structs not implemented yet", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50009, __func__, "foreign structs not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                         /*if (direction == GI_DIRECTION_OUT && transfer == GI_TRANSFER_EVERYTHING) {
                             hbgi_struct_foreign_release (info, arg->v_pointer);
                         }*/

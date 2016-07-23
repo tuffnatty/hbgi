@@ -1,8 +1,8 @@
 /*
  * hbgi source code
- * Extensions for Harbour C Class API
+ * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  */
 
@@ -20,7 +20,8 @@
 #define HBGI_IVAR_INFO 2
 #define HBGI_IVAR_GOBJECT 3
 #define HBGI_IVAR_METHOD_INFO 4
-#define HBGI_IVAR_COUNT 4
+#define HBGI_IVAR_FREE_ON_DEALLOC 5
+#define HBGI_IVAR_COUNT 5
 
 #define hbg_object_get(o) hb_arrayGetPtr((o), HBGI_IVAR_GOBJECT)
 
