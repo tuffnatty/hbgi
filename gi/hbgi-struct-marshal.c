@@ -63,9 +63,7 @@ hbgi_arg_struct_to_hb_marshal (GIArgument *arg,
              * memory is not caller allocated. */
             object = _hbgi_boxed_new(hb_type,
                                       arg->v_pointer,
-                                      transfer == GI_TRANSFER_NOTHING && !is_allocated,
-                                      is_allocated ?
-                                              g_struct_info_get_size(interface_info) : 0);
+                                      transfer == GI_TRANSFER_EVERYTHING);
         }
     } else if (g_type_is_a (g_type, G_TYPE_POINTER)) {
         hb_errRT_BASE_SubstR( HBGI_ERR, 50061, __func__, "pointer", HB_ERR_ARGS_BASEPARAMS );

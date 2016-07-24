@@ -2,9 +2,9 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
- * Most of the logic in this file is based on pygi-invoke.c from pygobject
+ * Most of the logic in this file is based on pygi-info.c from pygobject
  * library:
  *
  * Copyright (C) 2005-2009 Johan Dahlin <johan@gnome.org>
@@ -490,6 +490,7 @@ _hbgi_g_type_info_size (GITypeInfo *type_info)
                 case GI_INFO_TYPE_INVALID:
                 case GI_INFO_TYPE_FUNCTION:
                 case GI_INFO_TYPE_CONSTANT:
+                //case GI_INFO_TYPE_ERROR_DOMAIN:
                 case GI_INFO_TYPE_VALUE:
                 case GI_INFO_TYPE_SIGNAL:
                 case GI_INFO_TYPE_PROPERTY:

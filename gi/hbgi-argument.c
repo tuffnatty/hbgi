@@ -22,7 +22,9 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
+ * USA
  */
 
 #include <string.h>
@@ -809,17 +811,15 @@ array_success:
 
                     type = g_registered_type_info_get_g_type ( (GIRegisteredTypeInfo *) info);
 
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, "boxed/struct/union", HB_ERR_ARGS_BASEPARAMS );
-#if 0
                     /* Handle special cases first. */
                     if (g_type_is_a (type, G_TYPE_VALUE)) {
                         GValue *value;
                         GType object_type;
                         gint retval;
 
-                        object_type = hbg_type_from_object_strict ( (PyObject *) object->ob_type, FALSE);
+                        object_type = hbg_type_from_object_strict (object, FALSE);
                         if (object_type == G_TYPE_INVALID) {
-                            PyErr_SetString (PyExc_RuntimeError, "unable to retrieve object's GType");
+                            hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, "unable to retrieve object's GType", HB_ERR_ARGS_BASEPARAMS );
                             break;
                         }
 
@@ -834,15 +834,15 @@ array_success:
                              * GValue which is freed during the cleanup of
                              * invoke.
                              */
-                            GValue *src = (GValue *)((PyGObject *) object)->obj;
+                            GValue *src = (GValue *)hbgobject_get(object);
                             g_value_init (value, G_VALUE_TYPE (src));
                             g_value_copy(src, value);
                         } else {
                             g_value_init (value, object_type);
-                            retval = pyg_value_from_pyobject (value, object);
+                            retval = hbg_value_from_hbitem (value, object);
                             if (retval < 0) {
                                 g_slice_free (GValue, value);
-                                PyErr_SetString (PyExc_RuntimeError, "PyObject conversion to GValue failed");
+                                hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, "HB_ITEM conversion to GValue failed", HB_ERR_ARGS_BASEPARAMS );
                                 break;
                             }
                         }
@@ -851,33 +851,36 @@ array_success:
                     } else if (g_type_is_a (type, G_TYPE_CLOSURE)) {
                         GClosure *closure;
 
-                        if (pyg_type_from_object_strict (object, FALSE) == G_TYPE_CLOSURE) {
-                            closure = (GClosure *)pyg_boxed_get (object, void);
+                        if (hbg_type_from_object_strict (object, FALSE) == G_TYPE_CLOSURE) {
+                            closure = (GClosure *)hbg_boxed_get (object, void);
                         } else {
-                            closure = pyg_closure_new (object, NULL, NULL);
+                            closure = hbg_closure_new (object, NULL, NULL);
                             if (closure == NULL) {
-                                PyErr_SetString (PyExc_RuntimeError, "PyObject conversion to GClosure failed");
+                                hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, "HB_ITEM conversion to GClosure failed", HB_ERR_ARGS_BASEPARAMS );
                                 break;
                             }
                         }
 
                         arg.v_pointer = closure;
                     } else if (g_struct_info_is_foreign (info)) {
-                        PyObject *result;
-                        result = pygi_struct_foreign_convert_to_g_argument (
-                                     object, info, transfer, &arg);
+                        g_warning("Converting of type '%s' is not implemented", g_info_type_to_string(info_type));
+                        /*PyObject *result;
+                        result = hbgi_struct_foreign_convert_to_g_argument (
+                                     object, info, transfer, &arg);*/
                     } else if (g_type_is_a (type, G_TYPE_BOXED)) {
-                        arg.v_pointer = pyg_boxed_get (object, void);
+                        arg.v_pointer = hbg_boxed_get (object, void);
                         if (transfer == GI_TRANSFER_EVERYTHING) {
                             arg.v_pointer = g_boxed_copy (type, arg.v_pointer);
                         }
                     } else if (g_type_is_a (type, G_TYPE_POINTER) || type == G_TYPE_NONE) {
-                        g_warn_if_fail (!g_type_info_is_pointer (type_info) || transfer == GI_TRANSFER_NOTHING);
-                        arg.v_pointer = pyg_pointer_get (object, void);
+                        g_warning("Converting of type '%s' is not implemented", g_info_type_to_string(info_type));
+                        /*g_warn_if_fail (!g_type_info_is_pointer (type_info) || transfer == GI_TRANSFER_NOTHING);
+                        arg.v_pointer = hbg_pointer_get (object, void);*/
                     } else {
-                        PyErr_Format (PyExc_NotImplementedError, "structure type '%s' is not supported yet", g_type_name (type));
+                        gchar *msg = g_strdup_printf("structure type '%s' is not supported yet", g_type_name (type));
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50050, __func__, msg, HB_ERR_ARGS_BASEPARAMS );
+                        g_free(msg);
                     }
-#endif
                     break;
                 }
                 case GI_INFO_TYPE_ENUM:

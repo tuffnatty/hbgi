@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  * Most of the logic in this file is based on pygi-invoke.c from pygobject
  * library:
@@ -40,6 +40,7 @@
 
 #include "hbgi.h"
 #include "hbgi-argument.h"
+#include "hbgi-boxed.h"
 #include "hbgi-callbacks.h"
 #include "hbgi-invoke.h"
 
@@ -103,7 +104,7 @@ _initialize_invocation_state (struct invocation_state *state,
         state->is_constructor = (flags & GI_FUNCTION_IS_CONSTRUCTOR) != 0;
         state->implementor_gtype = 0;
     } else {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50005, "invoke not implemented for non-function callables", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50005, __func__, "invoke not implemented for non-function callables", HB_ERR_ARGS_BASEPARAMS );
         /*PHB_ITEM obj;
 
         state->is_method = TRUE;
@@ -167,7 +168,7 @@ _prepare_invocation_state (struct invocation_state *state,
         return FALSE;
 
     if (state->callback_index != G_MAXUINT8) {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50020, "callbacks not implemented", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50020, __func__, "callbacks not implemented", HB_ERR_ARGS_BASEPARAMS );
         /*
         if (!_hbgi_create_callback (function_info,
                                     state->is_method,
@@ -403,7 +404,7 @@ _prepare_invocation_state (struct invocation_state *state,
                         state->out_args[out_args_pos].v_pointer = NULL;
                         state->args[i] = &state->out_args[out_args_pos];
                         if (g_struct_info_is_foreign((GIStructInfo *) info) ) {
-                            hb_errRT_BASE_SubstR( HBGI_ERR, 50009, "foreign structs not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                            hb_errRT_BASE_SubstR( HBGI_ERR, 50009, __func__, "foreign structs not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                             /*PyObject *foreign_struct =
                                 pygi_struct_foreign_convert_from_g_argument(info, NULL);
 
@@ -415,8 +416,7 @@ _prepare_invocation_state (struct invocation_state *state,
 
                             Py_DECREF(foreign_struct);*/
                         } else if (g_type_is_a (g_registered_type_info_get_g_type (info), G_TYPE_BOXED)) {
-                            hb_errRT_BASE_SubstR( HBGI_ERR, 50010, "boxed not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
-                            //state->args[i]->v_pointer = _pygi_boxed_alloc (info, NULL);
+                            state->args[i]->v_pointer = _hbgi_boxed_alloc (info, NULL);
                         } else {
                             gssize size = g_struct_info_get_size ( (GIStructInfo *) info);
                             state->args[i]->v_pointer = g_malloc0 (size);
@@ -481,10 +481,9 @@ _prepare_invocation_state (struct invocation_state *state,
 
                     if (g_type_is_a (type, G_TYPE_BOXED)) {
                         g_assert (state->n_in_args > 0);
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50010, "boxed not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
-                        //state->in_args[0].v_pointer = pyg_boxed_get (py_arg, void);
+                        state->in_args[0].v_pointer = hbg_boxed_get(hb_arg, void);
                     } else if (g_struct_info_is_foreign (container_info)) {
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50009, "foreign structs not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50009, __func__, "foreign structs not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                         /*PyObject *result;
                         result = pygi_struct_foreign_convert_to_g_argument (
                                      py_arg, container_info,
@@ -492,7 +491,7 @@ _prepare_invocation_state (struct invocation_state *state,
                                      &state->in_args[0]);*/
                     } else if (g_type_is_a (type, G_TYPE_POINTER) || type == G_TYPE_NONE) {
                         g_assert (state->n_in_args > 0);
-                        hb_errRT_BASE_SubstR( HBGI_ERR, 50011, "pointers/voids not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                        hb_errRT_BASE_SubstR( HBGI_ERR, 50011, __func__, "pointers/voids not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                         //state->in_args[0].v_pointer = pyg_pointer_get (py_arg, void);
                     } else {
                         gchar *msg = g_strdup_printf("unable to convert an instance of '%s'", g_type_name(type));
@@ -708,15 +707,17 @@ _process_invocation_state (struct invocation_state *state,
     /* Convert the return value. */
     if (state->is_constructor) {
         const char *hb_type_name;
+        HB_USHORT hb_type;
         GIBaseInfo *info;
         GIInfoType info_type;
         GITransfer transfer;
 
         if (state->return_arg.v_pointer == NULL) {
-            hb_errRT_BASE_SubstR( HBGI_ERR, 50015, "constructor returned NULL", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+            hb_errRT_BASE_SubstR( HBGI_ERR, 50015, __func__, "constructor returned NULL", HB_ERR_ARGS_BASEPARAMS );
             return FALSE;
         }
 
+        hb_type = hb_objGetClass(hb_stackSelfItem());
         hb_type_name = hb_objGetClsName(hb_stackSelfItem());
 
         info = g_type_info_get_interface (state->return_type_info);
@@ -735,14 +736,13 @@ _process_invocation_state (struct invocation_state *state,
                 type = g_registered_type_info_get_g_type ( (GIRegisteredTypeInfo *) info);
 
                 if (g_struct_info_is_foreign (info)) {
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50009, "foreign structs not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                    hb_errRT_BASE_SubstR( HBGI_ERR, 50009, __func__, "foreign structs not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                     /*state->return_value =
                         pygi_struct_foreign_convert_from_g_argument (
                             info, state->return_arg.v_pointer);*/
                 } else if (g_type_is_a (type, G_TYPE_BOXED)) {
                     g_warn_if_fail (transfer == GI_TRANSFER_EVERYTHING);
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50010, "boxed not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
-                    //state->return_value = _pygi_boxed_new (py_type, state->return_arg.v_pointer, transfer == GI_TRANSFER_EVERYTHING);
+                    state->return_value = _hbgi_boxed_new (hb_type, state->return_arg.v_pointer, transfer == GI_TRANSFER_EVERYTHING);
                 } else if (g_type_is_a (type, G_TYPE_POINTER) || type == G_TYPE_NONE) {
                     if (transfer != GI_TRANSFER_NOTHING)
                         g_warning ("Return argument in %s returns a struct "
@@ -754,11 +754,11 @@ _process_invocation_state (struct invocation_state *state,
                                    "This may cause a leak in your application.",
                                    g_base_info_get_name ( (GIBaseInfo *) function_info) );
 
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50011, "pointers/voids not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                    hb_errRT_BASE_SubstR( HBGI_ERR, 50011, __func__, "pointers/voids not implemented yet", HB_ERR_ARGS_BASEPARAMS );
                     //state->return_value = _pygi_struct_new (py_type, state->return_arg.v_pointer, FALSE);
                 } else {
                     gchar *msg = g_strdup_printf("cannot create '%s' instances", hb_type_name);
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50016, msg, g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
+                    hb_errRT_BASE_SubstR( HBGI_ERR, 50016, g_base_info_get_name((GIBaseInfo *)function_info), msg, HB_ERR_ARGS_BASEPARAMS );
                     g_free(msg);
                     g_base_info_unref (info);
                     return FALSE;
@@ -768,7 +768,7 @@ _process_invocation_state (struct invocation_state *state,
             }
             case GI_INFO_TYPE_OBJECT:
                 if (state->return_arg.v_pointer == NULL) {
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50015, "constructor returned NULL", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+                    hb_errRT_BASE_SubstR( HBGI_ERR, 50015, __func__, "constructor returned NULL", HB_ERR_ARGS_BASEPARAMS );
                     break;
                 }
                 state->return_value = hbgobject_new (state->return_arg.v_pointer);
@@ -952,9 +952,9 @@ _free_invocation_state (struct invocation_state *state)
     }
 
     if (state->closure != NULL) {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50013, "closures not implemented yet", "hbgi", HB_ERR_ARGS_BASEPARAMS );
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50013, __func__, "closures not implemented yet", HB_ERR_ARGS_BASEPARAMS );
         /*if (state->closure->scope == GI_SCOPE_TYPE_CALL)
-            hb_errRT_BASE_SubstR( HBGI_ERR, 50013, "closures not implemented yet", "hbgi", HB_ERR_ARGS_BASEPARAMS );*/
+            hb_errRT_BASE_SubstR( HBGI_ERR, 50013, __func__, "closures not implemented yet", HB_ERR_ARGS_BASEPARAMS );*/
     }
 
     /* release all arguments. */
