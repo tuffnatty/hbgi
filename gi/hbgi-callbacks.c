@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  * Most of the logic in this file is based on pygi-callbacks.c from pygobject
  * library:
@@ -27,34 +27,39 @@
 
 #include <string.h>
 
+#include <hbapi.h>
 #include <hbapierr.h>
+#include <hbapiitm.h>
 
 #include "hbgi.h"
 #include "hbgi-callbacks.h"
+#include "hbgi-closure.h"
 
-#if 0
-static PyGICClosure *global_destroy_notify;
+static HbGICClosure *global_destroy_notify;
 
 static void
-_pygi_destroy_notify_callback_closure (ffi_cif *cif,
+_hbgi_destroy_notify_callback_closure (ffi_cif *cif,
                                        void *result,
                                        void **args,
                                        void *data)
 {
-    PyGICClosure *info = * (void**) (args[0]);
+    HbGICClosure *info = * (void**) (args[0]);
+    HB_SYMBOL_UNUSED(cif);
+    HB_SYMBOL_UNUSED(result);
+    HB_SYMBOL_UNUSED(data);
 
     g_assert (info);
 
-    _pygi_invoke_closure_free (info);
+    _hbgi_invoke_closure_free (info);
 }
 
 
-PyGICClosure*
-_pygi_destroy_notify_create (void)
+HbGICClosure*
+_hbgi_destroy_notify_create (void)
 {
     if (!global_destroy_notify) {
 
-        PyGICClosure *destroy_notify = g_slice_new0 (PyGICClosure);
+        HbGICClosure *destroy_notify = g_slice_new0 (HbGICClosure);
 
         g_assert (destroy_notify);
 
@@ -64,7 +69,7 @@ _pygi_destroy_notify_create (void)
 
         destroy_notify->closure = g_callable_info_prepare_closure ( (GICallableInfo*) glib_destroy_notify,
                                                                     &destroy_notify->cif,
-                                                                    _pygi_destroy_notify_callback_closure,
+                                                                    _hbgi_destroy_notify_callback_closure,
                                                                     NULL);
 
         global_destroy_notify = destroy_notify;
@@ -72,7 +77,6 @@ _pygi_destroy_notify_create (void)
 
     return global_destroy_notify;
 }
-#endif
 
 
 gboolean
@@ -158,28 +162,29 @@ _hbgi_scan_for_callbacks (GIFunctionInfo *function_info,
     return TRUE;
 }
 
-#if 0
 gboolean
-_pygi_create_callback (GIBaseInfo  *function_info,
+_hbgi_create_callback (GIBaseInfo  *function_info,
                        gboolean       is_method,
                        gboolean       is_constructor,
                        int            n_args,
-                       Py_ssize_t     py_argc,
-                       PyObject      *py_argv,
                        guint8         callback_index,
                        guint8         user_data_index,
                        guint8         destroy_notify_index,
-                       PyGICClosure **closure_out)
+                       HbGICClosure **closure_out)
 {
     GIArgInfo *callback_arg;
     GITypeInfo *callback_type;
     GICallbackInfo *callback_info;
     GIScopeType scope;
-    gboolean found_py_function;
-    PyObject *py_function;
-    guint8 i, py_argv_pos;
-    PyObject *py_user_data;
+    gboolean found_hb_function;
+    PHB_ITEM hb_function;
+    guint8 i, hb_argv_pos;
+    PHB_ITEM hb_user_data;
     gboolean allow_none;
+    HB_USHORT hb_argc = hb_itemPCount();
+    HB_SYMBOL_UNUSED(is_method);
+    HB_SYMBOL_UNUSED(is_constructor);
+    HB_SYMBOL_UNUSED(destroy_notify_index);
 
     callback_arg = g_callable_info_get_arg ( (GICallableInfo*) function_info, callback_index);
     scope = g_arg_info_get_scope (callback_arg);
@@ -191,53 +196,50 @@ _pygi_create_callback (GIBaseInfo  *function_info,
     callback_info = (GICallbackInfo*) g_type_info_get_interface (callback_type);
     g_assert (g_base_info_get_type ( (GIBaseInfo*) callback_info) == GI_INFO_TYPE_CALLBACK);
 
-    /* Find the Python function passed for the callback */
-    found_py_function = FALSE;
-    py_function = Py_None;
-    py_user_data = NULL;
+    /* Find the Harbour function passed for the callback */
+    found_hb_function = FALSE;
+    hb_function = NULL;
+    hb_user_data = NULL;
 
-    /* if its a method then we need to skip over 'self' */
-    if (is_method || is_constructor)
-        py_argv_pos = 1;
-    else
-        py_argv_pos = 0;
+    hb_argv_pos = 1;
 
-    for (i = 0; i < n_args && i < py_argc; i++) {
+    for (i = 0; i < n_args && i < hb_argc; i++) {
         if (i == callback_index) {
-            py_function = PyTuple_GetItem (py_argv, py_argv_pos);
+            hb_function = hb_param(hb_argv_pos, HB_IT_ANY);
             /* if we allow none then set the closure to NULL and return */
-            if (allow_none && py_function == Py_None) {
+            if (allow_none && (hb_function == NULL || HB_IS_NIL(hb_function))) {
                 *closure_out = NULL;
                 goto out;
             }
-            found_py_function = TRUE;
+            found_hb_function = TRUE;
         } else if (i == user_data_index) {
-            py_user_data = PyTuple_GetItem (py_argv, py_argv_pos);
+            hb_user_data = hb_param(hb_argv_pos, HB_IT_ANY);
         }
-        py_argv_pos++;
+        hb_argv_pos++;
     }
 
-    if (!found_py_function
-            || (py_function == Py_None || !PyCallable_Check (py_function))) {
-        PyErr_Format (PyExc_TypeError, "Error invoking %s.%s: Unexpected value "
+    if (!found_hb_function
+            || (hb_function == NULL || !(HB_IS_SYMBOL(hb_function) || HB_IS_BLOCK(hb_function)))) {
+        gchar *msg = g_strdup_printf("Error invoking %s:%s: Unexpected value "
                       "for argument '%s'",
                       g_base_info_get_namespace ( (GIBaseInfo*) function_info),
                       g_base_info_get_name ( (GIBaseInfo*) function_info),
                       g_base_info_get_name ( (GIBaseInfo*) callback_arg));
         g_base_info_unref ( (GIBaseInfo*) callback_info);
         g_base_info_unref ( (GIBaseInfo*) callback_type);
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50007, __func__, msg, HB_ERR_ARGS_BASEPARAMS );
+        g_free(msg);
         return FALSE;
     }
 
     /** Now actually build the closure **/
-    *closure_out = _pygi_make_native_closure ( (GICallableInfo *) callback_info,
+    *closure_out = _hbgi_make_native_closure ( (GICallableInfo *) callback_info,
                                                g_arg_info_get_scope (callback_arg),
-                                               py_function,
-                                               py_user_data);
+                                               hb_function,
+                                               hb_user_data);
 out:
     g_base_info_unref ( (GIBaseInfo*) callback_info);
     g_base_info_unref ( (GIBaseInfo*) callback_type);
 
     return TRUE;
 }
-#endif

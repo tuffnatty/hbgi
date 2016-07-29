@@ -2,7 +2,7 @@
  * hbgi source code
  * Core code
  *
- * Copyright 2014 Phil Krylov <phil.krylov a t gmail.com>
+ * Copyright 2014-2016 Phil Krylov <phil.krylov a t gmail.com>
  *
  * Most of the logic in this file is based on pygtype.c from pygobject
  * library:
@@ -761,7 +761,11 @@ hbg_value_from_hbitem(GValue *value, PHB_ITEM obj)
 	break;
     case G_TYPE_CHAR:
         if (HB_IS_STRING(obj)) {
+#ifndef GLIB_VERSION_2_32
 	    g_value_set_char(value, hb_itemGetCPtr(obj)[0]);
+#else
+	    g_value_set_schar(value, hb_itemGetCPtr(obj)[0]);
+#endif
 	} else {
 	    //PyErr_Clear();
 	    return -1;
@@ -961,7 +965,11 @@ hbg_value_as_hbitem(const GValue *value, gboolean copy_boxed)
 	else
 	    break;
     case G_TYPE_CHAR: {
+#ifndef GLIB_VERSION_2_32
 	gint8 val = g_value_get_char(value);
+#else
+	gint8 val = g_value_get_schar(value);
+#endif
 	return hb_itemPutCL(NULL, (char *)&val, 1);
     }
     case G_TYPE_UCHAR: {

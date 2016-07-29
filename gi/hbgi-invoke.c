@@ -42,6 +42,7 @@
 #include "hbgi-argument.h"
 #include "hbgi-boxed.h"
 #include "hbgi-callbacks.h"
+#include "hbgi-closure.h"
 #include "hbgi-invoke.h"
 
 #include "hbgobject.h"
@@ -63,8 +64,7 @@ struct invocation_state
     guint8 callback_index;
     guint8 user_data_index;
     guint8 destroy_notify_index;
-    void *closure;
-    //PyGICClosure *closure;
+    HbGICClosure *closure;
 
     glong error_arg_pos;
 
@@ -168,21 +168,21 @@ _prepare_invocation_state (struct invocation_state *state,
         return FALSE;
 
     if (state->callback_index != G_MAXUINT8) {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50020, __func__, "callbacks not implemented", HB_ERR_ARGS_BASEPARAMS );
-        /*
+
         if (!_hbgi_create_callback (function_info,
                                     state->is_method,
                                     state->is_constructor,
-                                    state->n_args, state->n_hb_args,
+                                    state->n_args,
                                     state->callback_index,
                                     state->user_data_index,
                                     state->destroy_notify_index, &state->closure))
             return FALSE;
+
         state->args_is_auxiliary[state->callback_index] = FALSE;
         if (state->destroy_notify_index != G_MAXUINT8) {
             state->args_is_auxiliary[state->destroy_notify_index] = TRUE;
             state->n_aux_in_args += 1;
-        }*/
+        }
     }
 
     if (state->is_method) {
@@ -520,12 +520,9 @@ _prepare_invocation_state (struct invocation_state *state,
             GIDirection direction;
 
             if (i == state->callback_index) {
-                hb_errRT_BASE_SubstR( HBGI_ERR, 50013, "closures not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
-#if 0
                 if (state->closure)
                     state->args[i]->v_pointer = state->closure->closure;
                 else
-#endif
                     /* Some callbacks params accept NULL */
                     state->args[i]->v_pointer = NULL;
                 hb_args_pos++;
@@ -536,10 +533,9 @@ _prepare_invocation_state (struct invocation_state *state,
                 continue;
             } else if (i == state->destroy_notify_index) {
                 if (state->closure) {
-                    hb_errRT_BASE_SubstR( HBGI_ERR, 50013, "closures not implemented yet", g_base_info_get_namespace((GIBaseInfo *)function_info), HB_ERR_ARGS_BASEPARAMS );
                     /* No need to clean up if the callback is NULL */
-                    /*PyGICClosure *destroy_notify = _pygi_destroy_notify_create();
-                    state->args[i]->v_pointer = destroy_notify->closure;*/
+                    HbGICClosure *destroy_notify = _hbgi_destroy_notify_create();
+                    state->args[i]->v_pointer = destroy_notify->closure;
                 }
                 continue;
             }
@@ -952,9 +948,8 @@ _free_invocation_state (struct invocation_state *state)
     }
 
     if (state->closure != NULL) {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50013, __func__, "closures not implemented yet", HB_ERR_ARGS_BASEPARAMS );
-        /*if (state->closure->scope == GI_SCOPE_TYPE_CALL)
-            hb_errRT_BASE_SubstR( HBGI_ERR, 50013, __func__, "closures not implemented yet", HB_ERR_ARGS_BASEPARAMS );*/
+        if (state->closure->scope == GI_SCOPE_TYPE_CALL)
+            _hbgi_invoke_closure_free (state->closure);
     }
 
     /* release all arguments. */

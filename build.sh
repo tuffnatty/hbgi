@@ -2,7 +2,7 @@
 
 HARBOUR_HOME="$HOME/build/harbour-git"
 HARBOUR_PLAT="darwin/gcc"
-HBMK2="$HARBOUR_HOME/bin/$HARBOUR_PLAT/hbmk2 -q0 -w2 -es2 -debug -optim-"
+HBMK2="$HARBOUR_HOME/bin/$HARBOUR_PLAT/hbmk2 -q0 -w2 -es2 -debug -optim- -cflag=-Wno-missing-field-initializers"
 
 # If HBGI_DYN is set to "no", build everything statically; helps debugging
 HBGI_DYN="no"
@@ -23,6 +23,7 @@ HBGI_SOURCES="
         hbgi-argument.c
         hbgi-boxed.c
         hbgi-callbacks.c
+        hbgi-closure.c
         hbgi-info.c
         hbgi-invoke.c
         hbgi-signal-closure.c
