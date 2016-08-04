@@ -258,7 +258,7 @@ _hbgi_closure_convert_arguments (GICallableInfo *callable_info, void **args,
         g_base_info_unref (arg_info);
     }
 
-    if (!hb_arraySize(hb_args, n_in_args))
+    if (!hb_arraySize(*hb_args, n_in_args))
         goto error;
 
     g_free (g_args);
@@ -364,7 +364,7 @@ _hbgi_closure_handle (ffi_cif *cif,
     }
 
     if (HB_IS_SYMBOL(closure->function)) {
-        hb_vmPushSymbol(closure->function);
+        hb_vmPush(closure->function);
         hb_vmPushNil();
     } else {
         hb_vmPushEvalSym();
