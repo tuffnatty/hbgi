@@ -14,6 +14,7 @@ Requirements
   * C compiler (tested with GCC on OS X)
   * Harbour 3.0.0 or higher
   * GObject Introspection
+  * libffi
 
 Copyright Information
 =====================
@@ -37,3 +38,11 @@ Compilation
 So far only a Unix-based build script is available. You need hbmk2 from Harbour on your PATH. To build, it should be as simple as running:
 
     $ ./build.sh
+
+TODO List
+=========
+  * Properties getter/setter support via :props
+  * Inheritance of Harbour classes from GObject classes
+  * Examples
+  * Documentation (https://github.com/lazka/pgi-docgen can be used)
+  * ...
