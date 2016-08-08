@@ -1,7 +1,5 @@
-hbgi
-====
-
 hbgi - Harbour bindings for GObject Introspection
+=================================================
 
 These are bindings for the GObject Introspection library, to be used in Harbour. It is in no way complete, but already usable for writing moderately complex applications. It is almost fully based on pygobject - the similar bindings for Python - and can be viewed as the successor to [xbgtk](http://xbgtk.sourceforge.net) - the older Harbour bindings for GTK+.
 
@@ -28,6 +26,7 @@ hbgi lacks documentation and examples. As the project is modeled after Python bi
 
 hbgi examples
 -------------
+  * Examples by [Rafa Carmona](https://github.com/rafathefull) at https://github.com/tuffnatty/hbgi/tree/master/demo
   * Examples by [Rafał Jopek](https://github.com/RJopek) at http://harbour.edu.pl/lib/hbgi/menu.html
 
 Python GObject Introspection examples
