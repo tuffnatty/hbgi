@@ -1,90 +1,89 @@
 /*
-  Show use Webkit in Harbour using library HBGI
-  If you press  mouse right button, show menu for navigate.
+  Demo for Webkit usage in Harbour using HBGI library
+  If you press mouse right button, it will show a menu for navigation.
   2016 Rafa Carmona
 */
 
-#define TRUE  .T.
-#define FALSE .F.
-
-MEMVAR gtk, gtkSource, gLib, WebKit
+MEMVAR Gtk, GtkSource, GLib, WebKit
 
 INIT PROCEDURE my_init()
 
-   PUBLIC gtk := hbgi_import( "Gtk" )
+   PUBLIC Gtk := hbgi_import( "Gtk" )
    PUBLIC WebKit := hbgi_import( "WebKit" )
 
    RETURN
+
 
 FUNCTION Main()
 
    LOCAL win, button, box, scroll, web, statusbar, contextid
 
-   gtk:init( hb_AParams() )
+   Gtk:init( hb_AParams() )
 
    /* Create window */
-   win := gtk:Window:new( gtk:WindowType:TOPLEVEL )
+   win := Gtk:Window:new( Gtk:WindowType:TOPLEVEL )
 
-   /* Add Title at the window */
+   /* Add title at the window */
    win:set_title( "Harbour HBGI with WebKit" )
 
-   /* Center Position window */
-   win:set_position( gtk:WindowPosition:CENTER )
+   /* Position window at center */
+   win:set_position( Gtk:WindowPosition:CENTER )
 
-   /* Size by Default*/
+   /* Size by default */
    win:set_default_size( 800, 600 )
 
-   /* Connect event delete-event for destroy window */
-   win:connect( 'delete-event', {|| gtk:main_quit() } )
+   /* Connect 'delete-event' signal to quit the main loop */
+   win:connect( 'delete-event', {|| Gtk:main_quit() } )
 
-   /* Create Box vertical  */
-   box := gtk:vbox:new( .F., 0 )
+   /* Create vertical Box */
+   box := Gtk:VBox:new( .F., 0 )
 
    /* Box add at Window */
    win:add( box )
 
-   /* Create scroll*/
-   scroll := gtk:scrolledWindow:New( NIL, NIL )
+   /* Create scroll */
+   scroll := Gtk:ScrolledWindow:New( NIL, NIL )
 
-   /* Border 10*/
+   /* Border 10 */
    scroll:set_border_width( 10 )
 
    /* Show ALWAYS scrollbar*/
-   scroll:set_policy( gtk:PolicyType:AUTOMATIC, Gtk:PolicyType:ALWAYS )
+   scroll:set_policy( Gtk:PolicyType:AUTOMATIC, Gtk:PolicyType:ALWAYS )
 
-   /* Add scroll at box*/
+   /* Add scroll to box */
    box:add( scroll )
 
-   /* Create WEBKIT! VERY EASY!! */
-   web := Webkit:WebView:New()
+   /* Create WebKit! VERY EASY!! */
+   web := WebKit:WebView:new()
 
-   /* Put the web app into the webview */
+   /* Put a web app into the webview */
    web:load_uri( "https://harbour.github.io/" )
 
-   /* Add WebKit a scroll */
+   /* Add WebKit to the scroll window */
    scroll:add( web )
 
-   /* Simple button , connect event clicked, exit app */
-   button := gtk:button:new_with_label( "Exit" )
-   button:connect( 'clicked', {|| gtk:main_quit() } )
+   /* Simple button, connect 'clicked' signal to exit app */
+   button := Gtk:Button:new_with_label( "Exit" )
+   button:connect( 'clicked', {|| Gtk:main_quit() } )
    box:pack_start( button, .F., .F., 0 )
 
    /* Status Bar*/
-   statusbar := gtk:statusbar:new()
-   box:pack_end( statusbar, FALSE, TRUE, 0 )
+   statusbar := Gtk:StatusBar:new()
+   box:pack_end( statusbar, .F., .T., 0 )
 
-   /*Push message in StatusBar*/
+   /* Push message in StatusBar */
    contextid := statusbar:get_context_id( "Statusbar example" )
    statusbar:push( contextid, "WebKit example running with HBGI (c)2016 Rafa Carmona" )
 
    /* Show ALL widgets */
    win:show_all()
 
-   /* Here, loop main events of GTK*/
-   gtk:Main()
+   /* Here, start the main event loop of GTK+ */
+   Gtk:main()
+
    win := NIL
    button := NIL
-   Web := NIL
+   web := NIL
    scroll := NIL
 
    RETURN 0
