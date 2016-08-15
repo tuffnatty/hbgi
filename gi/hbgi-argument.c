@@ -208,6 +208,8 @@ _hbgi_g_type_interface_check_object (GIBaseInfo *info,
                 HB_LONGLONG value = hb_itemGetNLL(object);
                 if (value == 0)
                     break;
+                /* FIXME: Here we accept any integer as valid flags */
+                break;
             }
             retval = _hbgi_g_registered_type_info_check_object (
                          (GIRegisteredTypeInfo *) info, TRUE, object);

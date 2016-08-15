@@ -99,6 +99,7 @@ hbgi_gtype_class_wrapper_add_methods(HB_USHORT uiClass, GIBaseInfo *info, GHashT
    switch (g_base_info_get_type(info))
    {
       case GI_INFO_TYPE_ENUM:
+      case GI_INFO_TYPE_FLAGS:
       {
          GIEnumInfo *einfo = (GIEnumInfo *)info;
          n_methods = g_enum_info_get_n_methods(einfo);
@@ -188,11 +189,13 @@ hbgi_gtype_class_wrapper_register(GType gtype, GIRegisteredTypeInfo *info)
    PHB_ITEM pInit, bases = NULL;
    int n_datas = 0;
    GIEnumInfo *enum_info = (GIEnumInfo *)info;
+   GIInfoType info_type = g_base_info_get_type(info);
    GHashTable *method_info_hash = NULL;
 
-   switch (g_base_info_get_type(info))
+   switch (info_type)
    {
       case GI_INFO_TYPE_ENUM:
+      case GI_INFO_TYPE_FLAGS:
          n_datas = g_enum_info_get_n_values(enum_info);
          bases = hb_itemArrayNew(0);
          break;
@@ -237,7 +240,7 @@ hbgi_gtype_class_wrapper_register(GType gtype, GIRegisteredTypeInfo *info)
    hb_itemPutPtr(pInit, method_info_hash);
    hbgi_hb_clsAddData(uiClass, "__method_info__", HB_OO_MSG_ACCESS, 0, HBGI_IVAR_METHOD_INFO, pInit);
    //hbgi_hb_clsAddMsg(uiClass, "__getattr__", HB_OO_MSG_ONERROR, 0, hbgi_gtype_class_wrapper_getattr, NULL);
-   if (g_base_info_get_type(info) == GI_INFO_TYPE_ENUM)
+   if (info_type == GI_INFO_TYPE_ENUM || info_type == GI_INFO_TYPE_FLAGS)
    {
       int i;
       for (i = 0; i < n_datas; i++)
@@ -245,7 +248,6 @@ hbgi_gtype_class_wrapper_register(GType gtype, GIRegisteredTypeInfo *info)
          GIValueInfo *value_info = g_enum_info_get_value(enum_info, i);
          hb_itemPutNLL(pInit, g_value_info_get_value(value_info));
          hbgi_hb_clsAddData(uiClass, g_base_info_get_name((GIBaseInfo *)value_info), HB_OO_MSG_ACCESS, 0, HBGI_IVAR_COUNT + i + 1, pInit);
-
       }
    }
    hb_itemRelease(pInit);
@@ -301,6 +303,7 @@ hbgi_module_get_class_from_message(void)
          switch (g_base_info_get_type(info))
          {
             case GI_INFO_TYPE_ENUM:
+            case GI_INFO_TYPE_FLAGS:
             case GI_INFO_TYPE_OBJECT:
             case GI_INFO_TYPE_UNION:
                uiClass = hbgi_gtype_class_wrapper_register(type, info);
