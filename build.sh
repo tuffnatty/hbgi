@@ -59,3 +59,5 @@ $HBMK2 -hbdyn -ohbgi -g $HBGIHB_SOURCES_PREFIXED $HBGOBJECT_SOURCES_PREFIXED $HB
 
 #$HBMK2 -L. -lhbgi -gtcgi test.prg || exit $?
 $HBMK2 -L. -lhbgi -L$HARBOUR_HOME/lib/$HARBOUR_PLAT -gtcgi test.prg || exit $?
+
+fi
