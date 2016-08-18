@@ -1,0 +1,13 @@
+-hblib
+-ohbgi
+
+-Ihb
+-Igi
+-Igobject
+
+gi/gi.hbm
+
+"-cflag=`pkg-config --cflags gobject-introspection-1.0`"
+
+hbgi.hbm
+hbgi.hbc
