@@ -1,0 +1,6 @@
+# common compiler options for building hbgi itself
+
+-q0 -w2 -es2
+-debug
+-optim-
+-cflag=-Wno-missing-field-initializers

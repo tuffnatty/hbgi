@@ -1,0 +1,10 @@
+# directives to link hbgi to an app
+
+libpaths=.
+libs=hbgihb hbgobject hbgi{!HBGI_DYNAMIC}
+libs=hbgidyn{HBGI_DYNAMIC}
+
+ldflags+="`pkg-config --libs glib-2.0`"
+ldflags+="`pkg-config --libs gobject-introspection-1.0`"
+dflags+="`pkg-config --libs glib-2.0`"
+dflags+="`pkg-config --libs gobject-introspection-1.0`"
