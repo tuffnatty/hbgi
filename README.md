@@ -46,6 +46,19 @@ So far only a Unix-based build script is available. You need `hbmk2` from Harbou
 
     $ ./build.sh
 
+It produces both static and dynamic libraries. There was a report of a successful (static) build under Windows, using [MSYS2](https://msys2.github.io/).
+
+Usage
+=====
+To build your app with the static libraries:
+
+    hbmk2 MY_APP.prg -oMY_APP_STATIC_EXECUTABLE_NAME -gtcgi hbgi.hbc
+
+To build your app with the dynamic library:
+
+    hbmk2 MY_APP.prg -oMY_APP_STATIC_EXECUTABLE_NAME -gtcgi -env:HBGI_DYNAMIC=yes hbgi.hbc
+
+
 TODO List
 =========
   * Properties getter/setter support via :props
