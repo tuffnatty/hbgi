@@ -9,4 +9,3 @@ gobject/gobject.hbm
 "-cflag=`pkg-config --cflags glib-2.0`"
 
 hbgi.hbm
-hbgi.hbc
