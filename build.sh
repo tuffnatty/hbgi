@@ -17,12 +17,18 @@ if ! pkg-config glib-2.0 || \
    exit 1
 fi
 
+DEMOS="test demo/gtk2webkit demo/navigator demo/sourceview demo/webkit"
+
 # static
 hbmk2 gihb.hbp
 hbmk2 gobject.hbp
 hbmk2 gi.hbp
-hbmk2 test.prg -otest_s -gtcgi hbgi.hbc
+for F in $DEMOS; do
+    hbmk2 $F.prg -o${F}_s -gtcgi hbgi.hbc
+done
 
 # dynamic
 hbmk2 -hbdyn -shared '{win}-lhbmaindllp' @gi.hbp @gobject.hbp @gihb.hbp -ohbgidyn
-hbmk2 test.prg -otest_d -gtcgi -env:HBGI_DYNAMIC=yes hbgi.hbc
+for F in $DEMOS; do
+    hbmk2 $F.prg -o${F}_d -gtcgi -env:HBGI_DYNAMIC=yes hbgi.hbc
+done
