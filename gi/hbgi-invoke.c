@@ -670,7 +670,9 @@ _invoke_function (struct invocation_state *state,
     //pyg_end_allow_threads;
 
     if (!retval) {
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50014, "GError check not implemented yet", g_base_info_get_namespace((GIBaseInfo *)callable_info), HB_ERR_ARGS_BASEPARAMS );
+        gchar *msg = g_strdup_printf("GError check not implemented yet, but GError message is '%s'", error->message);
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50014, g_base_info_get_name((GIBaseInfo *)callable_info), msg, HB_ERR_ARGS_BASEPARAMS );
+        g_free(msg);
         //pyglib_error_check(&error);
 
         /* TODO: release input arguments. */
@@ -683,7 +685,9 @@ _invoke_function (struct invocation_state *state,
 
         error = state->args[state->error_arg_pos]->v_pointer;
 
-        hb_errRT_BASE_SubstR( HBGI_ERR, 50014, "GError check not implemented yet", g_base_info_get_namespace((GIBaseInfo *)callable_info), HB_ERR_ARGS_BASEPARAMS );
+        gchar *msg = g_strdup_printf("GError check not implemented yet, but GError message is '%s'", (*error)->message);
+        hb_errRT_BASE_SubstR( HBGI_ERR, 50014, g_base_info_get_name((GIBaseInfo *)callable_info), msg, HB_ERR_ARGS_BASEPARAMS );
+        g_free(msg);
         //if (pyglib_error_check(error)) {
             /* TODO: release input arguments. */
 
