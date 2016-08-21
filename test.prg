@@ -1,11 +1,11 @@
+memvar gtk
+
 init procedure my_init()
-  memvar gtk
   public gtk := hbgi_import("Gtk")
   return
 
 function Main()
   local win, button
-  memvar gtk
 
   gtk:init(hb_aParams())
 
