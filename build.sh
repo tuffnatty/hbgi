@@ -7,11 +7,11 @@ fi
 
 if ! pkg-config glib-2.0 || \
    ! pkg-config gobject-introspection-1.0; then
-   echo '! Error: Required components missing: glib, gobject-introspection'
+   echo '! Error: Required components missing: glib2, gobject-introspection'
    case "$(uname)" in
       *_NT*)
       echo '! Install using:'
-      echo '  pacman -S mingw-w64-{i686,x86_64}-{gtk2,glib,gobject-introspection}'
+      echo '  pacman -S mingw-w64-{i686,x86_64}-{gtk2,glib2,gobject-introspection}'
       ;;
    esac
    exit 1
