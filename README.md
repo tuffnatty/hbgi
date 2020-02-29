@@ -27,7 +27,6 @@ hbgi lacks documentation and examples. As the project is modeled after Python bi
 hbgi examples
 -------------
   * Examples by [Rafa Carmona](https://github.com/rafathefull) at https://github.com/tuffnatty/hbgi/tree/master/demo
-  * Examples by [Rafał Jopek](https://github.com/RJopek) at http://harbour.edu.pl/lib/hbgi/menu.html
 
 Python GObject Introspection examples
 -------------------------------------
